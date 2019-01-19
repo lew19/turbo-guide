@@ -48,3 +48,73 @@ inflammation_results2 <-
 all.equal(inflammation_results,
           inflammation_results2)
 
+# visualization with ggplot2
+library(ggplot2)
+dat_for_plotting <- dat[, 1:5]
+hist(dat_for_plotting[,2])
+
+p_1 <- ggplot(dat_for_plotting, aes(x =V2)) +
+  geom_histogram()
+p_1
+
+# exercise: create a scatterplot for V2 against V3 
+#           x-axis = V2, y-axis = V3
+p_2 <- ggplot(dat_for_plotting, aes(x = V3, y = V4)) +
+  geom_point() +
+  xlab("Day 3 inflammation data") +
+  ylab("Day 4 inflammation data") +
+  ggtitle("Scatterplot of Day 3 vs 4 inflammation data") +
+  theme_minimal()
+p_2
+
+# data subsetting with dplyr
+library(dplyr) 
+dat_subset <- filter(dat, V2 > 0)
+
+dat_subset_piped <- dat %>%
+  filter(V2 > 0) %>%
+  select(c("V3", "V4"))
+  
+# exercise: create an object dat_subset_piped2 that
+#           is exactly the same as dat_subset piped 
+#           but does not use the pipe to create a 
+#           sequence of function calls
+dat_subset_piped2<- select(filter(dat, V2 > 0),
+                            c("V3", "V4"))
+all.equal(dat_subset_piped,dat_subset_piped2)
+
+
+# more dplyr fun: mutate, summarize
+? mutate
+dat_transmuted <- dat %>%
+  filter(V2 > 0) %>%
+  select(c("V3", "V4", "V5")) %>%
+  transmute (
+    sum_V4_and_V5 = V4 + V5,
+    prod_V4_and_V5 = V4 * V5,
+    mean_all_columns = (V3 + V4 + V5) / 3
+  )
+
+?summarise
+dat_summarised <- dat %>%
+  summarise(
+    mean_V4 = mean(V4),
+    sd_V4 = sd(V4),
+    min_V4 = min(V4)
+  )
+# wrapping up piping, dplyr, and ggplot2
+p_dat_transmuted <- dat %>%
+  filter(V2 > 0) %>%
+  select(c("V3", "V4", "V5")) %>%
+  transmute (
+    sum_V4_and_V5 = V4 + V5,
+    prod_V4_and_V5 = V4 * V5,
+    mean_all_columns = (V3 + V4 + V5) / 3
+  ) %>% 
+  ggplot(aes(x = sum_V4_and_V5, y = mean_all_columns, colour = prod_V4_and_V5)) +
+  geom_point() +
+  xlab("sum of Day 4 and Day 5") +
+  ylab("Mean of days 3, 4, and 5") +
+  ggtitle("Scatterplot of derived values") +
+  theme_minimal()
+ggsave("final_plot.pdf" , plot = p_dat_transmuted)
